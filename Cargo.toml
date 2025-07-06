@@ -1,0 +1,15 @@
+[package]
+name = "wrls"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nalgebra = "0.33"
+rand = "0.9"
+
+[dev-dependencies]
+criterion = { version = "0.6", features = ["html_reports"] }
+
+[[bench]]
+name = "wrls_benchmark"
+harness = false
