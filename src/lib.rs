@@ -114,16 +114,14 @@ impl WeightedRLS {
         // `nalgebra` overloads `+=` for efficient in-place addition.
         self.theta += &gain * error;
 
-        // 6. Update the covariance matrix: P_new = (1/lambda) * (I - k * x^T) * P_old
-        // A naive implementation would be O(d^3) due to matrix-matrix multiplication.
-        // We use the optimized Sherman-Morrison formula which is O(d^2).
-        // P_new = (P_old - k * x^T * P_old) / lambda
-        // Let's break it down:
-        //   - x_t_p = x^T * P_old. This is a vector-matrix multiplication, resulting in a row vector. O(d^2).
-        //   - k * x_t_p is an outer product (d x 1 vector * 1 x d vector), resulting in a d x d matrix. O(d^2).
-        // The overall update is dominated by these O(d^2) steps.
-        let k_x_t = &gain * x.transpose();
-        self.covariance -= &k_x_t * &self.covariance;
+        // 6. Update the covariance matrix: P_new = (1/lambda) * (P_old - k * (x^T * P_old))
+        // This uses the Sherman-Morrison formula for O(d^2) efficiency.
+        //   - Compute x^T * P_old: vector-matrix multiplication, O(d^2).
+        //   - Compute k * (x^T * P_old): outer product, O(d^2).
+        //   - Subtract and divide: O(d^2).
+        let x_t_p = x.transpose() * &self.covariance;
+        let outer = &gain * &x_t_p;
+        self.covariance -= &outer;
         self.covariance /= self.lambda;
     }
 
